@@ -1,0 +1,67 @@
+{
+  "name": "opfs-media-cache",
+  "version": "0.1.0",
+  "description": "Application-managed OPFS media caching with HLS.js and flv.js adapters for video playlists.",
+  "type": "module",
+  "license": "MIT",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "src",
+    "docs",
+    "README.md",
+    "README.en.md",
+    "LICENSE",
+    "NOTICE.md",
+    "CHANGELOG.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./hls": {
+      "types": "./dist/adapters/hls.d.ts",
+      "import": "./dist/adapters/hls.js"
+    },
+    "./flv": {
+      "types": "./dist/adapters/flv.d.ts",
+      "import": "./dist/adapters/flv.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p demo/tsconfig.json",
+    "test": "npm run build && node --test test/*.test.mjs",
+    "test:browser": "npm run build && node scripts/browser-smoke.mjs",
+    "demo": "vite demo --host 127.0.0.1",
+    "demo:build": "vite build demo",
+    "fixtures": "node scripts/generate-fixtures.mjs",
+    "check": "npm run typecheck && npm test && npm run demo:build",
+    "prepack": "npm run build"
+  },
+  "peerDependencies": {
+    "hls.js": "^1.6.0",
+    "flv.js": "^1.6.2"
+  },
+  "peerDependenciesMeta": {
+    "hls.js": {
+      "optional": true
+    },
+    "flv.js": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "hls.js": "^1.6.15",
+    "flv.js": "^1.6.2",
+    "vite": "^6.4.1",
+    "playwright": "^1.56.1"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts"
+}

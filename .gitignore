@@ -1,0 +1,8 @@
+node_modules/
+dist/
+demo/dist/
+coverage/
+playwright-report/
+.DS_Store
+*.tgz
+artifacts/
