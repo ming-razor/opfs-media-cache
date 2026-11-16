@@ -63,5 +63,13 @@
     "node": ">=22"
   },
   "main": "./dist/index.js",
-  "types": "./dist/index.d.ts"
+  "types": "./dist/index.d.ts",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ming-razor/opfs-media-cache.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ming-razor/opfs-media-cache/issues"
+  },
+  "homepage": "https://github.com/ming-razor/opfs-media-cache#readme"
 }

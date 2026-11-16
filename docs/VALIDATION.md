@@ -25,4 +25,4 @@ The browser test also inserted an OPFS directory containing only `data`, then re
 
 ## Limits of this record
 
-This is a correctness smoke test on small fixtures, not a throughput, memory, large-playlist or cross-backend benchmark. It does not certify Safari, Firefox, older Chromium, native HLS, DRM, LL-HLS, WebSocket FLV, long-running multi-tab contention or arbitrary live streams. The Linux CI workflow is supplied but has not run remotely. No remote repository or npm release has been created.
+This is a correctness smoke test on small fixtures, not a throughput, memory, large-playlist or cross-backend benchmark. It does not certify Safari, Firefox, older Chromium, native HLS, DRM, LL-HLS, WebSocket FLV, long-running multi-tab contention or arbitrary live streams. This record describes local validation. Consult GitHub Actions for the current remote CI status. Source repository: https://github.com/ming-razor/opfs-media-cache. No npm release has been created.

@@ -2,7 +2,7 @@
 
 Application-managed persistent media caching for video playlists, built with TypeScript and the Origin Private File System.
 
-This is a **local, pre-publication v0.1.0 project**, not an existing npm release. See [the Chinese README](README.md) for complete examples and limitations.
+Source: [ming-razor/opfs-media-cache](https://github.com/ming-razor/opfs-media-cache). This is an **experimental v0.1.0 project**, not an existing npm release. See [the Chinese README](README.md) for complete examples and limitations.
 
 ## Features
 

@@ -24,7 +24,7 @@
 
 ## 快速开始
 
-当前是 **0.1.0 本地开发版本，尚未发布到 npm / GitHub**。在项目目录执行：
+源码仓库：[ming-razor/opfs-media-cache](https://github.com/ming-razor/opfs-media-cache)。当前为 **0.1.0 实验性版本，尚未发布到 npm**。克隆后在项目目录执行：
 
 ```bash
 npm ci
