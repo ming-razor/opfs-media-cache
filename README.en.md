@@ -1,45 +1,85 @@
 # OPFS Media Cache
 
-Application-managed persistent media caching for video playlists, built with TypeScript and the Origin Private File System.
+[中文](README.md) · [API](docs/API.md) · [Test results](docs/VALIDATION.md)
 
-Source: [ming-razor/opfs-media-cache](https://github.com/ming-razor/opfs-media-cache). This is an **experimental v0.1.0 project**, not an existing npm release. See [the Chinese README](README.md) for complete examples and limitations.
+Local disk caching for HLS.js and flv.js. Media segments are saved to the Origin Private File System (OPFS) during playback and reused on subsequent plays.
+
+The project started with a video wall that cycled through several large videos. The browser's HTTP cache could not reliably retain the full playlist, so later rotations downloaded the same content again. This library lets the application control the cache budget, retained videos and content versions.
 
 ## Features
 
-- A HLS.js loader decorator: upstream networking and cancellation, versioned segment caching, inclusive byte-range identities, bounded asynchronous writes. Immutable VOD playlists can be cached explicitly; live playlists, encryption keys and LL-HLS parts are not persisted by default.
-- A flv.js custom loader: aligned HTTP Range blocks for VOD, seek reuse, cached file length and bounded per-block buffering. Live FLV and parameter-based seeks use uncached streaming.
-- OPFS files with commit metadata, SHA-256 validation, orphan cleanup, logical byte budgets, LRU, TTL and persistent asset pinning.
-- Namespace-scoped Web Locks when available; storage failures fall back to normal networking.
-- A local demo with original synthetic HLS/FLV fixtures and Chromium refresh/offline replay checks.
+- HLS segment caching and aligned HTTP Range blocks for FLV VOD.
+- Byte budgets, LRU eviction, TTL and asset pinning for video playlists.
+- Versioned resource identities and content integrity checks.
+- Network fallback when cached files are missing, damaged or unavailable.
+- TypeScript interfaces and player loader adapters; no Service Worker setup required.
 
-## Run locally
+## Try the demo
 
 Requires Node.js 22+.
 
 ```sh
+git clone https://github.com/ming-razor/opfs-media-cache.git
+cd opfs-media-cache
 npm ci
-npm run check
 npm run demo
+```
+
+Play either sample, reload the page and play again to see cache hits. Once its playlist and media have been saved, the sample can also play offline.
+
+Version 0.1.0 is available from this repository. For use in another project, run `npm pack` and install the generated tarball. The npm release is still pending. Install HLS.js or flv.js separately as needed.
+
+## HLS.js
+
+```ts
+import Hls from 'hls.js';
+import { createMediaCache } from 'opfs-media-cache';
+import { createHlsLoader } from 'opfs-media-cache/hls';
+
+const cache = await createMediaCache({
+  namespace: 'screen-videos',
+  maxBytes: 2 * 1024 ** 3
+});
+await cache.setPinnedAssets(['intro']);
+
+const hls = new Hls({
+  loader: createHlsLoader(Hls.DefaultConfig.loader, cache, {
+    resource: context => ({
+      assetId: 'intro', version: 'v1', url: context.url
+    })
+  })
+});
+hls.loadSource('/videos/intro/index.m3u8');
+hls.attachMedia(document.querySelector('video')!);
+```
+
+Media segments are cached by default. Set `cachePlaylists: true` for immutable VOD playlists if offline replay is needed. Keep playlist caching disabled for live streams. Change `version` when the media changes.
+
+For FLV, use `createFlvLoader` from `opfs-media-cache/flv` as the player's `customLoader`. It caches aligned Range blocks for HTTP FLV VOD. Live streams and parameter-based seeks use the network. See the [Chinese README](README.md#接入-flvjs) for the complete example.
+
+## Deployment
+
+Use HTTPS or localhost with OPFS file support. Playback tests currently run on Chrome and Chromium. If OPFS is unavailable, loading falls back to the network. Cache capacity is subject to the browser's origin quota and available disk space.
+
+FLV caching requires valid `206 Content-Range` responses. Cross-origin servers must expose the `Content-Range` header. Web Locks coordinates cache access across tabs; without it, operations are serialized within each cache instance.
+
+Keep `namespace` or `variant` separate for user-specific media and clear that data on logout. Pinning prevents budget eviction; expiration and explicit deletion still apply. Local cache timings can affect adaptive-bitrate estimates, so fixed-bitrate video playlists are the initial focus.
+
+Native HLS interception, WebSocket FLV, DRM offline playback and LL-HLS partial-segment persistence are outside the current adapter support. Storage backends for IndexedDB and Cache Storage are planned; custom implementations can already be injected through the `MediaStore` interface.
+
+## Development
+
+```sh
+npm run check
 npm run test:browser
+npm run fixtures
 npm pack --dry-run
 ```
 
-On macOS the browser test uses an installed Google Chrome. Elsewhere install Playwright Chromium using `npx playwright install --with-deps chromium`, or specify `CHROME_PATH`.
-
-The core exports `createMediaCache`, `MediaCache`, `OpfsStore` and TypeScript interfaces. Import adapters from `opfs-media-cache/hls` and `opfs-media-cache/flv`. Players are optional peer dependencies and are not bundled into the core library. Package locally with `npm pack` before installing in another project.
-
-## Design boundaries
-
-OPFS does **not** grant a larger independent storage quota than IndexedDB or Cache Storage. All share browser-managed origin storage constraints. No benchmark establishes a performance win for this implementation.
-
-Callers must maintain immutable content versions and partition authenticated variants. Pinning prevents automatic budget eviction, not TTL expiration, explicit clearing or browser storage eviction; it does not pre-download assets. Pinning more media than the budget cannot guarantee full cache coverage.
-
-The current implementation uses asynchronous writable files, not Worker SyncAccessHandles. HLS buffers one complete fragment before storage; FLV buffers one range block. Local-cache timing can affect adaptive-bitrate estimates, so fixed-representation playlists are the initial target.
-
-HTTPS/localhost and compatible OPFS file APIs are required. Without Web Locks, only single-instance serialization is provided. Safari/Firefox playback combinations have not been certified. There is no Service Worker, native HLS interception, DRM offline-license implementation, WebSocket FLV cache, full HLS prefetcher or cross-instance network deduplication.
+The browser test checks first playback, page reload, offline replay and recovery of an incomplete cache entry. On macOS it uses an installed Chrome; elsewhere install Playwright Chromium or set `CHROME_PATH`. See [the test record](docs/VALIDATION.md) for the workload and results.
 
 ## Acknowledgments
 
-Design references: [Shaka Player](https://github.com/shaka-project/shaka-player) and [hls-movie-player-with-cache](https://github.com/code4fukui/hls-movie-player-with-cache). This project is a new implementation, not copied code. Player integrations use the official [HLS.js](https://github.com/video-dev/hls.js) and [flv.js](https://github.com/bilibili/flv.js) loader contracts.
+Player integrations use [HLS.js](https://github.com/video-dev/hls.js) and [flv.js](https://github.com/bilibili/flv.js). The storage design draws on [Shaka Player](https://github.com/shaka-project/shaka-player) and [hls-movie-player-with-cache](https://github.com/code4fukui/hls-movie-player-with-cache).
 
-MIT licensed. See [NOTICE.md](NOTICE.md).
+[MIT License](LICENSE) · [Dependency notices](NOTICE.md)

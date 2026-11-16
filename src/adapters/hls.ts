@@ -13,20 +13,28 @@ export interface HlsCacheOptions {
 
 /** Decorates the upstream loader rather than replacing its transport/retry behavior. */
 export function createHlsLoader(BaseLoader: HlsConfig['loader'], cache: MediaCache, options: HlsCacheOptions): HlsConfig['loader'] {
+  if (options.lookupTimeoutMs !== undefined && (!Number.isFinite(options.lookupTimeoutMs) || options.lookupTimeoutMs <= 0)) {
+    throw new RangeError('lookupTimeoutMs must be positive and finite');
+  }
   return class CachedHlsLoader implements Loader<LoaderContext> {
     private upstream: Loader<LoaderContext>;
     private generation = 0;
     private networkStarted = false;
     private active = false;
     private lookupStarted = 0;
+    private destroyed = false;
     private callbacks?: LoaderCallbacks<LoaderContext>;
     context: LoaderContext | null = null;
-    constructor(config: HlsConfig) { this.upstream = new BaseLoader(config); }
-    get stats(): LoaderStats { return this.upstream.stats; }
+    readonly stats: LoaderStats;
+    constructor(config: HlsConfig) {
+      this.upstream = new BaseLoader(config);
+      this.stats = this.upstream.stats;
+    }
     getCacheAge = (): number | null => this.upstream.getCacheAge?.() ?? null;
     getResponseHeader = (name: string): string | null => this.upstream.getResponseHeader?.(name) ?? null;
 
     load(context: LoaderContext, config: LoaderConfiguration, callbacks: LoaderCallbacks<LoaderContext>): void {
+      if (this.destroyed) throw new Error('Loader has been destroyed');
       const generation = ++this.generation;
       this.context = context;
       this.callbacks = callbacks;
@@ -115,10 +123,18 @@ export function createHlsLoader(BaseLoader: HlsConfig['loader'], cache: MediaCac
       const notify = this.active;
       this.active = false;
       ++this.generation;
+      if (!notify) return;
       this.stats.aborted = true;
       if (this.networkStarted) this.upstream.abort();
       if (notify && this.context) this.callbacks?.onAbort?.(this.stats, this.context, null);
     }
-    destroy(): void { this.abort(); this.callbacks = undefined; this.context = null; this.upstream.destroy(); }
+    destroy(): void {
+      if (this.destroyed) return;
+      this.destroyed = true;
+      this.abort();
+      this.callbacks = undefined;
+      this.context = null;
+      this.upstream.destroy();
+    }
   };
 }

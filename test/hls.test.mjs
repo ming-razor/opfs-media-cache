@@ -89,3 +89,36 @@ test('relative VOD playlist cache returns an absolute URI base for referenced fr
     else delete globalThis.location;
   }
 });
+
+test('destroy after success preserves completed statistics for both network and cache hits', async () => {
+  const state = setup();
+  class Upstream extends state.Upstream {
+    destroy() { super.destroy(); this.stats = null; }
+  }
+  const cache = await createMediaCache({ store: new MemoryStore() });
+  const Loader = createHlsLoader(Upstream, cache, { resource: resolveResource });
+  for (let attempt = 0; attempt < 2; attempt++) {
+    let completedStats;
+    const loader = new Loader({});
+    await new Promise((resolve, reject) => {
+      loader.load(fragment, {}, {
+        onSuccess(response, stats) { completedStats = stats; loader.destroy(); resolve(); },
+        onError: reject, onTimeout: reject
+      });
+    });
+    assert.equal(completedStats.aborted, false);
+    assert.equal(loader.stats, completedStats);
+    assert.doesNotThrow(() => { loader.destroy(); loader.abort(); });
+    await cache.flush();
+  }
+  assert.equal(state.requests(), 1);
+  assert.equal(state.aborts(), 0);
+});
+
+test('invalid lookup deadlines fail at configuration time', async () => {
+  const cache = await createMediaCache({ store: new MemoryStore() });
+  const { Upstream } = setup();
+  for (const value of [0, -1, NaN, Infinity]) {
+    assert.throws(() => createHlsLoader(Upstream, cache, { resource: resolveResource, lookupTimeoutMs: value }), RangeError);
+  }
+});

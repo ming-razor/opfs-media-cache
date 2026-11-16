@@ -1,17 +1,16 @@
-# Attribution and dependencies
+# Dependencies and acknowledgments
 
-The cache implementation in this repository was written for this project. No source files from the design-reference repositories were copied or modified.
+OPFS Media Cache is MIT licensed.
 
-Design references:
+The player adapters use the public loader APIs of these optional peer dependencies:
 
-- Shaka Player, https://github.com/shaka-project/shaka-player — Apache-2.0; offline storage lifecycle and pluggable storage architecture.
-- hls-movie-player-with-cache, https://github.com/code4fukui/hls-movie-player-with-cache — MIT; HLS persistent caching and cache-first playback.
+| Dependency | License |
+| --- | --- |
+| [HLS.js](https://github.com/video-dev/hls.js) | Apache-2.0 |
+| [flv.js](https://github.com/bilibili/flv.js) | Apache-2.0 |
 
-Optional peer/development dependencies retain their own licenses:
+Development dependencies include TypeScript and Playwright (Apache-2.0), and Vite (MIT). Their license files are included with the installed packages. Player code and the demo bundle are excluded from the library tarball; when distributing the built demo, retain the bundled dependencies' notices.
 
-- HLS.js, https://github.com/video-dev/hls.js — Apache-2.0.
-- flv.js, https://github.com/bilibili/flv.js — Apache-2.0.
-- TypeScript and Playwright — Apache-2.0.
-- Vite — MIT.
+The cache design draws on [Shaka Player](https://github.com/shaka-project/shaka-player) (Apache-2.0) and [hls-movie-player-with-cache](https://github.com/code4fukui/hls-movie-player-with-cache) (MIT).
 
-The published library package excludes player implementations and demo bundles. If redistributing a built demo, preserve the licenses/notices supplied with its bundled dependencies. `demo/public/media` contains synthetic test content generated with FFmpeg test sources; it contains no downloaded third-party footage.
+The media in `demo/public/media` is generated from FFmpeg test sources. See `scripts/generate-fixtures.mjs` to regenerate it.

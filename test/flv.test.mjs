@@ -88,3 +88,31 @@ test('credentials and configured headers reach the network', async () => {
   assert.equal(server.requests[0].init.credentials, 'include');
   assert.equal(new Headers(server.requests[0].init.headers).get('Authorization'), 'Bearer test');
 });
+
+test('aborting during cache lookup starts no network request', async () => {
+  const store = new MemoryStore();
+  store.read = async () => { await delay(20); return undefined; };
+  const cache = await createMediaCache({ store });
+  let requests = 0, callbacks = 0;
+  const Loader = createFlvLoader(cache, {
+    resource: () => resource('a'), blockSize: 4,
+    fetch: async () => { requests++; throw new Error('unexpected fetch'); }
+  });
+  const loader = new Loader(seek, {});
+  loader.onDataArrival = loader.onError = loader.onComplete = () => callbacks++;
+  loader.open(source, { from: 0, to: -1 });
+  await delay(2); loader.abort(); await delay(35);
+  assert.equal(requests, 0); assert.equal(callbacks, 0);
+});
+
+test('aborting in content-length callback suppresses subsequent data and completion', async () => {
+  const { Loader } = await setup(new Uint8Array([1, 2, 3]));
+  for (const config of [{}, { isLive: true }]) {
+    const loader = new Loader(seek, config); let calls = 0;
+    loader.onContentLengthKnown = () => loader.abort();
+    loader.onDataArrival = loader.onError = loader.onComplete = () => calls++;
+    loader.open(source, { from: 0, to: -1 });
+    await delay(30);
+    assert.equal(calls, 0);
+  }
+});

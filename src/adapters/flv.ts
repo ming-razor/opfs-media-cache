@@ -101,6 +101,7 @@ export function createFlvLoader(cache: MediaCache, options: FlvCacheOptions): Fl
         const end = start + blockSize - 1;
         const key: MediaResource = { ...resource, url: source.url, range: [start, end], variant: JSON.stringify([resource.variant ?? '', 'flv-block-v1']) };
         const frame = await cache.get(key);
+        if (signal.aborted || generation !== this.generation) throw abortError();
         let bytes: ArrayBuffer | undefined;
         if (frame && frame.byteLength > 8) {
           const savedTotal = new DataView(frame).getFloat64(0);
@@ -144,6 +145,7 @@ export function createFlvLoader(cache: MediaCache, options: FlvCacheOptions): Fl
         if (bytes.byteLength === 0 || bytes.byteLength > blockSize) throw new Error('Invalid cached FLV block');
         if (bytes.byteLength < blockSize) total = start + bytes.byteLength;
         if (total !== undefined && received === 0) this.onContentLengthKnown(Math.min(total - range.from, range.to === -1 ? Infinity : range.to - range.from + 1));
+        if (signal.aborted || generation !== this.generation) return;
         const limit = Math.min(start + bytes.byteLength, range.to === -1 ? Infinity : range.to + 1);
         const data = bytes.slice(position - start, limit - start);
         if (data.byteLength === 0) break;
@@ -165,6 +167,7 @@ export function createFlvLoader(cache: MediaCache, options: FlvCacheOptions): Fl
       const headers = new Headers(seekConfig.headers as HeadersInit);
       new Headers(this.config.headers).forEach((value, key) => headers.set(key, value));
       const response = await request(seekConfig.url, this.init(source, headers, signal));
+      if (signal.aborted || generation !== this.generation) { await response.body?.cancel(); throw abortError(); }
       if (!response.ok || !response.body) throw new Error(`FLV HTTP ${response.status}`);
       if (range.from > 0 && this.config.seekType !== 'param' && this.config.seekType !== 'custom' && response.status !== 206) {
         await response.body.cancel(); throw new Error('Server ignored non-zero Range; refusing to mislabel bytes');
@@ -175,7 +178,9 @@ export function createFlvLoader(cache: MediaCache, options: FlvCacheOptions): Fl
       }
       const length = Number(response.headers.get('Content-Length'));
       if (length > 0 && initialReceived === 0) this.onContentLengthKnown(length);
+      if (signal.aborted || generation !== this.generation) { await response.body.cancel(); return; }
       if (response.url && response.url !== source.url) this.onURLRedirect(this.seek.removeURLParameters(response.url));
+      if (signal.aborted || generation !== this.generation) { await response.body.cancel(); return; }
       const reader = response.body.getReader();
       let position = range.from, received = initialReceived;
       const limit = range.to === -1 ? Infinity : range.to + 1;

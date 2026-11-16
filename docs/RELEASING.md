@@ -1,17 +1,22 @@
-# 发布说明
+# 发布
 
-源码仓库：https://github.com/ming-razor/opfs-media-cache 。npm 包尚未发布，包名可用性未验证。以下保留首次建库与后续发布的操作说明。
+源码仓库：[ming-razor/opfs-media-cache](https://github.com/ming-razor/opfs-media-cache)。当前 npm 包尚未发布。
 
-## 首次发布 GitHub
+## 检查
 
-1. 确定目标 GitHub 用户或组织，以及仓库是否公开。
-2. 检查 README、许可证、素材和 NOTICE；填写 package.json 的 repository / bugs / homepage 为实际地址。
-3. 运行 `npm ci`、`npm run check`、`npm run test:browser` 和 `npm pack --dry-run`。
-4. 在 GitHub 创建空的公开仓库，将此目录提交并推送到目标仓库。本项目使用 main 分支；发布前先检查本地提交和 origin 指向是否符合预期。
-5. 确认远程 CI 通过后，再标记 v0.1.0；CHANGELOG 的 unreleased 应改为实际发布日期。
+```bash
+npm ci
+npm run check
+npm run test:browser
+npm pack --dry-run
+```
 
-如果使用 GitHub CLI，可在确认 owner/name 后执行 `gh repo create OWNER/NAME --public --source=. --remote=origin`，先检查待提交文件，再提交、推送。项目不会自动执行这些远程操作。
+检查 CHANGELOG 和包内文件，用 `npm pack` 生成的 tarball 在独立项目中验证导入与播放器接入。确认 GitHub Actions 通过。
 
-## 发布 npm
+## GitHub 版本
 
-检查包名是否可用、peerDependencies、ESM 支持范围和分发文件。用 `npm pack` 生成的 tarball 在独立消费者项目测试后，再由维护者登录 npm 并发布。切勿把本地验证视为性能领先或跨浏览器认证。
+更新 CHANGELOG 的版本与日期，在对应提交上创建 tag，再发布 Release，附上变更内容和使用示例。修复和已知问题应能在提交或 Issue 中找到。
+
+## npm
+
+首次发布前确认包名可用，并检查 npm 账号的发布权限。核对 `package.json` 中的版本、exports、peerDependencies 和仓库地址后，再发布经过验证的 tarball。

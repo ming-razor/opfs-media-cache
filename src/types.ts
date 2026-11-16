@@ -1,7 +1,7 @@
 export interface MediaResource {
   /** Stable logical video identifier; pinning is applied to this identifier. */
   assetId: string;
-  /** Change when bytes change. Required: URLs alone do not establish freshness. */
+  /** Content version; change this when the media changes. */
   version: string;
   url: string;
   /** Inclusive byte range. HLS's exclusive rangeEnd is converted by its adapter. */
@@ -43,7 +43,7 @@ export type CacheEvent = {
 
 export interface CacheOptions {
   namespace?: string;
-  /** Logical media-byte budget, not a promise of available browser disk space. */
+  /** Maximum media bytes retained by this cache. */
   maxBytes?: number;
   maxEntryBytes?: number;
   /** Bounds HLS background write buffers; excess writes are skipped. */

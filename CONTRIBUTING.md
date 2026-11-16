@@ -1,9 +1,19 @@
 # Contributing
 
-Use Node.js 22+, run `npm ci`, then `npm run check`. Run `npm run test:browser` when changing OPFS, loader lifecycle or playback integration. Test media can be regenerated with `npm run fixtures` when FFmpeg is installed.
+Use Node.js 22 or later.
 
-Changes to cache identity, byte ranges, quota handling, eviction, pinning, error recovery or loader cancellation need behavioral regression coverage. Do not replace a passing behavioral check with an assertion that merely mirrors implementation details.
+```sh
+npm ci
+npm run check
+npm run test:browser
+```
 
-Keep business motivation, API examples and support boundaries aligned with changes. Performance claims require a reproducible workload, browser/device versions, cold/warm definitions and measurements. Do not claim greater storage quota or guaranteed permanence simply because the backend is OPFS.
+`check` runs the type checks, regression suite and demo build. The browser suite checks playback against real OPFS storage. Run it when changing a loader, file handling or cache lifecycle. Test fixtures can be regenerated with FFmpeg using `npm run fixtures`.
 
-Before publication, choose the repository owner, verify package-name availability, fill in the repository URL and review bundled third-party notices. This local project does not publish itself.
+Please include a regression test for changes to resource identity, byte ranges, cancellation, eviction or recovery. Keep the API documentation and examples in sync with the implementation.
+
+For storage backend work, start with `MediaStore` in `src/types.ts`. Keep persistence details in the store and playback logic in the adapters. A new backend should pass the same cache behavior tests before adding backend-specific cases.
+
+Performance reports are welcome. Include the browser and device, video sizes, cache state and steps needed to reproduce the results. For bugs, a small media sample or a minimal reproduction is especially helpful.
+
+See [RELEASING.md](docs/RELEASING.md) for the release process.

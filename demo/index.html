@@ -9,13 +9,13 @@
 <body>
   <main>
     <header><div class="brand" aria-label="OPFS Media Cache">◈ <span>OPFS MEDIA CACHE</span></div><span class="badge">v0.1 · 本地演示</span></header>
-    <section class="intro"><p class="eyebrow">APPLICATION-MANAGED VIDEO STORAGE</p><h1>让轮播视频，<br>留在磁盘里。</h1><p class="lead">用同一份本地缓存连接 HLS 与 FLV。播放、刷新、再次播放，观察媒体数据从网络切换到 OPFS。</p></section>
+    <section class="intro"><p class="eyebrow">APPLICATION-MANAGED VIDEO STORAGE</p><h1>让轮播视频，<br>留在磁盘里。</h1><p class="lead">播放示例后刷新页面，查看 HLS 分片和 FLV 字节块的本地命中情况。</p></section>
     <section class="workspace">
       <div class="player"><video id="video" controls muted playsinline></video><div class="toolbar"><button id="hls">播放 HLS</button><button id="flv" class="secondary">播放 FLV</button><button id="stop" class="quiet">停止</button><span id="playback" role="status">准备中…</span></div></div>
-      <aside><p class="eyebrow">STORAGE OVERVIEW</p><h2 id="backend">正在连接 OPFS</h2><div class="metrics"><div><span>缓存命中</span><strong id="hits">0</strong></div><div><span>已保存</span><strong id="bytes">0 KB</strong></div><div><span>媒体条目</span><strong id="entries">0</strong></div><div><span>自动淘汰</span><strong id="evictions">0</strong></div></div><label class="pin"><input id="pin" type="checkbox" checked>保护演示播放列表，避免被自动淘汰</label><button id="clear" class="secondary full">清空本演示的缓存</button><p class="note">HTTP 缓存和 OPFS 不同。请刷新后重播验证磁盘复用；开启完整缓存后，也可以断网再播。</p><p id="quota" class="note"></p></aside>
+      <aside><p class="eyebrow">STORAGE OVERVIEW</p><h2 id="backend">正在连接 OPFS</h2><div class="metrics"><div><span>缓存命中</span><strong id="hits">0</strong></div><div><span>已保存</span><strong id="bytes">0 KB</strong></div><div><span>媒体条目</span><strong id="entries">0</strong></div><div><span>自动淘汰</span><strong id="evictions">0</strong></div></div><label class="pin"><input id="pin" type="checkbox" checked>保护演示播放列表，避免被自动淘汰</label><button id="clear" class="secondary full">清空本演示的缓存</button><p class="note">示例播放完成后，刷新页面再播一次。数据保存完整后，可在页面中断网重播。</p><p id="quota" class="note"></p></aside>
     </section>
     <section class="events"><div><h2>缓存事件</h2><span>最近 60 条 · 当前页面</span></div><pre id="log" aria-live="polite"></pre></section>
-    <footer>本地合成测试素材 · 不依赖第三方视频源 · OPFS 仍受站点存储配额限制</footer>
+    <footer>测试视频由 FFmpeg 合成 · 接入方法与 API 见项目 README</footer>
   </main>
   <script type="module" src="/main.ts"></script>
 </body>

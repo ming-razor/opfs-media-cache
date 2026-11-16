@@ -82,3 +82,32 @@ test('invalid keys and budgets are rejected', async () => {
   assert.throws(() => resourceKey(resource('a', { version: '' })), TypeError);
   await assert.rejects(create({ maxBytes: -1 }), RangeError);
 });
+
+test('disabled storage stays usable when Web Crypto is unavailable', async () => {
+  const descriptor = Object.getOwnPropertyDescriptor(globalThis, 'crypto');
+  Object.defineProperty(globalThis, 'crypto', { configurable: true, value: undefined });
+  try {
+    const cache = await createMediaCache();
+    assert.equal(cache.available, false);
+    assert.equal(await cache.get(resource()), undefined);
+    assert.equal(await cache.put(resource(), bytes(1)), false);
+  } finally { Object.defineProperty(globalThis, 'crypto', descriptor); }
+});
+
+test('pending write budget rejects invalid values', async () => {
+  for (const value of [0, -1, NaN, Infinity, 0.5]) {
+    await assert.rejects(create({ maxPendingWriteBytes: value }), RangeError);
+  }
+});
+
+test('an in-flight write keeps its original identity when the caller changes the object', async () => {
+  const cache = await create();
+  const original = resource('a', { range: [0, 0] });
+  const expected = structuredClone(original);
+  const task = cache.put(original, bytes(1));
+  original.assetId = 'b'; original.range[0] = 1; original.range[1] = 1;
+  assert.equal(await task, true);
+  const { entries } = await cache.inspect();
+  assert.deepEqual(entries[0].resource, expected);
+  assert.deepEqual(await cache.get(expected), bytes(1));
+});

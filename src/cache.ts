@@ -22,6 +22,9 @@ export class MediaCache {
       throw new RangeError('Cache budgets must be positive safe integers');
     }
     if (options.ttlMs !== undefined && (!Number.isFinite(options.ttlMs) || options.ttlMs <= 0)) throw new RangeError('ttlMs must be positive and finite');
+    if (options.maxPendingWriteBytes !== undefined && (!Number.isSafeInteger(options.maxPendingWriteBytes) || options.maxPendingWriteBytes <= 0)) {
+      throw new RangeError('maxPendingWriteBytes must be a positive safe integer');
+    }
   }
 
   static async create(options: CacheOptions = {}): Promise<MediaCache> {
@@ -59,8 +62,9 @@ export class MediaCache {
   }
 
   async get(resource: MediaResource): Promise<ArrayBuffer | undefined> {
-    const key = await sha256(new TextEncoder().encode(resourceKey(resource)));
+    const identity = resourceKey(resource);
     if (!this.store) { this.miss(resource); return undefined; }
+    const key = await sha256(new TextEncoder().encode(identity));
     return this.lock(async () => {
       try {
         const result = await this.store!.read(key);
@@ -110,6 +114,8 @@ export class MediaCache {
   }
 
   async put(resource: MediaResource, data: ArrayBuffer): Promise<boolean> {
+    // Keep the saved identity stable if the caller reuses its resource object.
+    resource = { ...resource, range: resource.range && [resource.range[0], resource.range[1]] };
     const identity = resourceKey(resource);
     if (!this.store || data.byteLength > Math.min(this.maxEntryBytes, this.maxBytes)) {
       this.emit({ type: 'skip', resource, reason: !this.store ? 'storage-unavailable' : 'entry-too-large' }); return false;
